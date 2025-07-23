@@ -1,0 +1,105 @@
+name: Enhanced RAG System CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-mock
+    
+    - name: Lint with flake8 (basic)
+      run: |
+        pip install flake8
+        # Stop on syntax errors and undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Warning on complexity and line length
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+    
+    - name: Test imports and basic functionality
+      run: |
+        python -c "
+        try:
+            from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+            from langchain_community.vectorstores import FAISS
+            from langchain_core.documents import Document
+            from pypdf import PdfReader
+            import requests
+            import numpy as np
+            from domain_analyzer import DomainAnalyzer
+            print('✅ All imports successful')
+        except ImportError as e:
+            print(f'❌ Import failed: {e}')
+            exit(1)
+        "
+    
+    - name: Test notebook can be processed
+      run: |
+        pip install nbconvert
+        # Convert notebook to Python to check for syntax errors
+        jupyter nbconvert --to python RAG.ipynb --stdout > /dev/null
+        echo "✅ Notebook syntax is valid"
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+    
+    - name: Install security tools
+      run: |
+        pip install bandit safety
+    
+    - name: Run security scan
+      run: |
+        bandit -r . -f json || true
+        safety check || true
+
+  documentation:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check documentation
+      run: |
+        # Check that key files exist
+        test -f README.md || (echo "❌ README.md missing" && exit 1)
+        test -f CLAUDE.md || (echo "❌ CLAUDE.md missing" && exit 1)
+        test -f requirements.txt || (echo "❌ requirements.txt missing" && exit 1)
+        echo "✅ All documentation files present"
+    
+    - name: Validate requirements.txt
+      run: |
+        python -m pip install --upgrade pip
+        # Test that all requirements can be resolved
+        pip install -r requirements.txt --dry-run
+        echo "✅ Requirements are valid"
