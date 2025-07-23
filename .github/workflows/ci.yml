@@ -36,10 +36,10 @@ jobs:
     - name: Lint with flake8 (basic)
       run: |
         pip install flake8
-        # Stop on syntax errors and undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Stop on syntax errors and undefined names (exclude .venv and .git)
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=.venv,.git,__pycache__,.pytest_cache
         # Warning on complexity and line length
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics --exclude=.venv,.git,__pycache__,.pytest_cache
     
     - name: Test imports and basic functionality
       run: |
@@ -51,12 +51,28 @@ jobs:
             from pypdf import PdfReader
             import requests
             import numpy as np
-            from domain_analyzer import DomainAnalyzer
-            print('✅ All imports successful')
+            print('✅ Core imports successful')
         except ImportError as e:
-            print(f'❌ Import failed: {e}')
+            print('❌ Import failed:', e)
             exit(1)
         "
+    
+    - name: Test domain analyzer import
+      run: |
+        python -c "
+        try:
+            from unittest.mock import patch
+            with patch('domain_analyzer.OpenAIEmbeddings'):
+                from domain_analyzer import DomainAnalyzer
+                print('✅ Domain analyzer import successful')
+        except ImportError as e:
+            print('❌ Domain analyzer import failed:', e)
+            exit(1)
+        "
+    
+    - name: Run pytest tests
+      run: |
+        pytest tests/ -v
     
     - name: Test notebook can be processed
       run: |
