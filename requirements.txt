@@ -22,3 +22,49 @@ typing-extensions==4.12.2
 
 # Optional but recommended for better performance
 tiktoken==0.8.0
+
+# Enhanced features dependencies (for advanced examples)
+# Data analysis and visualization
+pandas==2.1.4
+matplotlib==3.8.2
+seaborn==0.13.0
+plotly==5.17.0
+
+# Machine learning and dimensionality reduction  
+scikit-learn==1.3.2
+umap-learn==0.5.5
+
+# Natural language processing metrics
+rouge-score==0.1.2
+nltk==3.8.1
+
+# Testing framework
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-mock==3.12.0
+pytest-cov==4.1.0
+pytest-benchmark==4.0.0
+
+# Configuration management
+pydantic==2.5.2
+
+# CLI and UI frameworks
+click==8.1.7
+rich==13.7.0
+gradio==4.8.0
+
+# Async HTTP requests
+aiohttp==3.9.1
+
+# BM25 ranking for hybrid retrieval
+rank-bm25==0.2.2
+
+# Security scanning (for CI/CD)
+bandit==1.7.5
+safety==2.3.5
+
+# Code quality tools
+black==23.12.1
+isort==5.13.2
+flake8==7.0.0
+mypy==1.8.0
