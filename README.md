@@ -212,8 +212,7 @@ conda install faiss-cpu -c conda-forge
 ```
 RAG/
 ├── RAG.ipynb              # 📓 The main notebook - START HERE!
-├── domain_analyzer.py     # 🔍 Advanced analysis tools (optional)
-├── integration_example.py # 🔗 Example code (for reference)
+├── domain_analyzer.py     # 🔍 Advanced domain analysis (optional enhancement)
 ├── requirements.txt       # 📦 List of packages to install
 ├── .env                   # 🔐 YOUR API KEYS GO HERE (you create this)
 ├── README.md             # 📖 This friendly guide you're reading!
@@ -221,6 +220,8 @@ RAG/
 ```
 
 📍 **Most important files: `RAG.ipynb` (to run) and `.env` (for your API keys)**
+
+🎯 **That's it! Clean, simple, and focused on what matters most.**
 
 ## 🎯 **How Much Better Is This System?**
 
