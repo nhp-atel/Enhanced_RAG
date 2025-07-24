@@ -1,0 +1,24 @@
+# Production Configuration - Optimized for quality
+system:
+  environment: "production"
+
+document_processing:
+  chunk_size: 1200       # Larger for better context
+  max_pages_for_metadata: 5
+  max_pages_for_summary: 8
+  metadata_char_limit: 12000
+  summary_char_limit: 20000
+
+retrieval:
+  default_k: 8          # More docs for better accuracy
+
+cost_control:
+  daily_budget_usd: 100.0  # Higher production budget
+
+logging:
+  level: "INFO"         # Less verbose for production
+  output: "file"        # Log to file in production
+
+monitoring:
+  enabled: true         # Enable metrics in production
+  export_to_prometheus: true

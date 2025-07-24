@@ -1,0 +1,13 @@
+# Configuration for long research papers (>50 pages)
+document_processing:
+  chunk_size: 1200
+  chunk_overlap: 200
+  max_pages_for_metadata: 8
+  max_pages_for_summary: 12
+  split_strategy: "section_aware"
+
+retrieval:
+  default_k: 10         # More retrieval for long papers
+  
+cost_control:
+  per_request_budget_usd: 2.0  # Higher budget for complex papers

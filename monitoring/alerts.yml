@@ -1,0 +1,53 @@
+# Prometheus Alerting Rules for RAG System
+
+groups:
+  - name: rag_system_alerts
+    rules:
+      # High error rate
+      - alert: RAGHighErrorRate
+        expr: rate(rag_errors_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "RAG system error rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+          
+      # LLM latency too high  
+      - alert: RAGHighLatency
+        expr: avg(rag_llm_duration_seconds) > 5.0
+        for: 3m
+        labels:
+          severity: warning  
+        annotations:
+          summary: "High LLM latency"
+          description: "Average LLM response time is {{ $value }}s"
+          
+      # Daily budget exceeded
+      - alert: RAGBudgetExceeded
+        expr: sum(rag_daily_cost_usd) > 50.0
+        labels:
+          severity: critical
+        annotations:
+          summary: "Daily budget exceeded"
+          description: "Daily API costs reached ${{ $value }}"
+          
+      # Service down
+      - alert: RAGServiceDown
+        expr: up{job="rag-system"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "RAG service is down"
+          description: "RAG system has been down for more than 1 minute"
+          
+      # Cache hit rate too low
+      - alert: RAGLowCacheHitRate
+        expr: (rag_cache_hits / (rag_cache_hits + rag_cache_misses)) < 0.3
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is {{ $value | humanizePercentage }}"

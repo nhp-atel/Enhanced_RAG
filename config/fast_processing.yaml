@@ -1,0 +1,25 @@
+# Configuration optimized for speed with aggressive caching
+system:
+  mode: "lite"
+
+document_processing:
+  chunk_size: 600        # Smaller chunks for faster processing
+  max_pages_for_metadata: 2
+  max_pages_for_summary: 3
+
+vector_store:
+  persistence:
+    enabled: true
+    save_every_n_docs: 50  # Save frequently for crash recovery
+
+caching:
+  enabled: true
+  backend: "memory"      # Fastest cache backend
+  max_size_mb: 512
+  ttl_seconds: 7200      # 2 hours
+
+retrieval:
+  default_k: 4          # Fewer docs for speed
+
+cost_control:
+  per_request_budget_usd: 0.50  # Lower budget for lite mode

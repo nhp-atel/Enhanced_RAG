@@ -1,0 +1,155 @@
+# Quality Gate Configuration for RAG System
+# This file defines the minimum quality standards required for code changes
+
+# Minimum thresholds for various quality metrics
+thresholds:
+  # Test pass rates (0.0 to 1.0)
+  unit_test_pass_rate: 0.95        # 95% of unit tests must pass
+  integration_test_pass_rate: 0.90  # 90% of integration tests must pass
+  quality_test_pass_rate: 0.80     # 80% of quality tests must pass
+  
+  # Code coverage
+  code_coverage: 0.75               # 75% code coverage required
+  
+  # RAG system quality metrics
+  average_retrieval_precision: 0.25  # 25% average precision@5 for retrieval
+  average_generation_rouge: 0.15     # 15% average ROUGE-L score
+  answer_faithfulness: 0.40          # 40% average faithfulness score
+  answer_relevance: 0.30             # 30% average relevance score
+  
+  # Performance metrics
+  max_response_time_ms: 5000         # Max 5 seconds for query response
+  max_processing_time_ms: 60000      # Max 60 seconds for document processing
+  
+  # Cost control
+  max_cost_per_query: 0.10           # Max $0.10 per query
+  max_cost_per_document: 1.00        # Max $1.00 per document processing
+
+# Weights for calculating overall quality score
+weights:
+  unit_tests: 0.25          # 25% weight for unit test results
+  integration_tests: 0.25   # 25% weight for integration test results
+  quality_tests: 0.30       # 30% weight for quality test results
+  performance_metrics: 0.20 # 20% weight for performance metrics
+
+# Conditions that cause immediate failure regardless of other scores
+fail_on:
+  critical_test_failures: true       # Fail if any critical tests fail
+  security_vulnerabilities: true     # Fail if security issues found
+  performance_regression: true       # Fail if performance degrades significantly
+  memory_leaks: true                 # Fail if memory leaks detected
+  api_breaking_changes: true         # Fail if breaking API changes without version bump
+
+# Quality gate rules by branch/environment
+branch_rules:
+  main:
+    # Production branch - strictest requirements
+    min_overall_score: 0.85
+    require_all_checks: true
+    allow_quality_test_failures: false
+    
+  develop:
+    # Development branch - slightly relaxed
+    min_overall_score: 0.75
+    require_all_checks: true
+    allow_quality_test_failures: true
+    max_quality_test_failures: 2
+    
+  feature/*:
+    # Feature branches - most relaxed
+    min_overall_score: 0.65
+    require_all_checks: false
+    allow_quality_test_failures: true
+    max_quality_test_failures: 5
+    allow_unit_test_failures: false
+
+# Regression detection settings
+regression_detection:
+  enabled: true
+  baseline_file: ".github/performance-baselines.json"
+  
+  # Performance regression thresholds
+  max_response_time_increase: 0.20    # 20% increase in response time
+  max_processing_time_increase: 0.15  # 15% increase in processing time
+  max_cost_increase: 0.10             # 10% increase in costs
+  
+  # Quality regression thresholds
+  max_precision_decrease: 0.05        # 5% decrease in precision
+  max_rouge_decrease: 0.03            # 3% decrease in ROUGE
+  max_faithfulness_decrease: 0.05     # 5% decrease in faithfulness
+
+# Exemptions and overrides
+exemptions:
+  # Files/paths that can be excluded from certain checks
+  code_coverage_exempt:
+    - "scripts/*"
+    - "tests/*"
+    - "**/conftest.py"
+  
+  # Test patterns that are informational only
+  informational_tests:
+    - "test_benchmark_*"
+    - "test_performance_*"
+    
+  # Known flaky tests (should be fixed but won't fail gate)
+  flaky_tests:
+    - "test_external_api_*"
+
+# Notification settings
+notifications:
+  # Slack webhook for quality gate results
+  slack_webhook: "${SLACK_QUALITY_WEBHOOK}"
+  
+  # Email notifications
+  email_on_failure: true
+  email_recipients:
+    - "dev-team@company.com"
+  
+  # GitHub PR comments
+  github_pr_comments: true
+  include_detailed_metrics: true
+
+# Custom quality checks
+custom_checks:
+  # Check that new prompts are tested
+  prompt_testing:
+    enabled: true
+    pattern: "prompts/*.yaml"
+    require_test_coverage: true
+    
+  # Check that new domains have evaluation data
+  domain_evaluation:
+    enabled: true
+    pattern: "config/domains/*.yaml"
+    require_ground_truth: true
+    
+  # Check that configuration changes are validated
+  config_validation:
+    enabled: true
+    pattern: "config/*.yaml"
+    require_schema_validation: true
+
+# Reporting configuration
+reporting:
+  # Generate detailed HTML report
+  html_report: true
+  html_output: "quality-gate-report.html"
+  
+  # JSON output for programmatic consumption
+  json_output: "quality-gate-results.json"
+  
+  # Include historical trend data
+  include_trends: true
+  trend_window_days: 30
+  
+  # Metrics to track over time
+  tracked_metrics:
+    - "overall_score"
+    - "unit_test_pass_rate"
+    - "integration_test_pass_rate"
+    - "quality_test_pass_rate"
+    - "average_retrieval_precision"
+    - "average_generation_rouge"
+    - "answer_faithfulness"
+    - "average_response_time"
+    - "average_cost_per_query"

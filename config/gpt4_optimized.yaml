@@ -1,0 +1,15 @@
+# GPT-4 Optimized Configuration
+llm:
+  model: "gpt-4o"
+  max_tokens: 4096       # GPT-4 can handle more tokens
+  temperature: 0.1
+
+document_processing:
+  chunk_size: 2000       # Larger chunks for bigger context window
+  chunk_overlap: 300     # More overlap for better continuity
+  
+retrieval:
+  default_k: 12          # More context for better reasoning
+
+cost_control:
+  per_request_budget_usd: 3.0  # GPT-4 is more expensive

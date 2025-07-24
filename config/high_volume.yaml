@@ -1,0 +1,29 @@
+# Configuration for high-volume production deployment
+system:
+  environment: "production"
+
+document_processing:
+  chunk_size: 1000       # Larger chunks for efficiency
+
+vector_store:
+  persistence:
+    enabled: true
+    directory: "/data/persistent/indices"  # Dedicated storage
+    save_every_n_docs: 100
+
+caching:
+  enabled: true
+  backend: "file"        # Persistent across restarts
+  directory: "/data/persistent/cache"
+  max_size_mb: 2048      # Large cache for high volume
+  ttl_seconds: 86400     # 24 hours
+
+retrieval:
+  default_k: 8
+
+cost_control:
+  daily_budget_usd: 200.0  # Higher budget for production
+
+monitoring:
+  enabled: true
+  export_to_prometheus: true

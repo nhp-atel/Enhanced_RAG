@@ -1,0 +1,46 @@
+# Development and testing dependencies
+
+# Testing framework
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-mock>=3.10.0
+pytest-timeout>=2.1.0
+pytest-asyncio>=0.21.0
+pytest-xdist>=3.0.0  # For parallel test execution
+
+# Test utilities
+factory-boy>=3.2.0   # For test data generation
+faker>=18.0.0        # For generating fake data
+responses>=0.23.0    # For mocking HTTP requests
+
+# Code quality
+flake8>=6.0.0
+black>=23.0.0
+isort>=5.12.0
+mypy>=1.0.0
+bandit>=1.7.0        # Security linting
+safety>=2.3.0        # Security vulnerability checking
+
+# Documentation
+sphinx>=6.0.0
+sphinx-rtd-theme>=1.2.0
+sphinxcontrib-mermaid>=0.8.0
+
+# Development utilities
+ipython>=8.0.0
+jupyter>=1.0.0
+pre-commit>=3.0.0
+
+# XML parsing for test results
+junitparser>=3.0.0
+lxml>=4.9.0
+
+# YAML processing
+PyYAML>=6.0
+
+# Data processing for analysis
+numpy>=1.24.0
+pandas>=1.5.0
+
+# HTTP client for testing
+httpx>=0.24.0

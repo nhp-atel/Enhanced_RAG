@@ -1,0 +1,19 @@
+# Development Configuration - Fast processing for testing
+system:
+  environment: "development"
+
+document_processing:
+  chunk_size: 400        # Smaller for faster processing
+  max_pages_for_metadata: 2
+  max_pages_for_summary: 3
+  metadata_char_limit: 4000
+  summary_char_limit: 6000
+
+retrieval:
+  default_k: 3          # Fewer docs for faster testing
+
+cost_control:
+  daily_budget_usd: 5.0  # Lower budget for dev
+
+logging:
+  level: "DEBUG"        # Verbose logging for development

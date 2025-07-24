@@ -1,0 +1,350 @@
+name: RAG System Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run nightly at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  PYTHON_VERSION: "3.9"
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, "3.10"]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Create test environment file
+      run: |
+        echo "OPENAI_API_KEY=test-key-for-mocked-tests" > .env
+        echo "LANGSMITH_API_KEY=test-langsmith-key" >> .env
+    
+    - name: Run unit tests
+      run: |
+        pytest tests/test_unit/ -v \
+          --cov=src \
+          --cov-report=xml \
+          --cov-report=term-missing \
+          --junit-xml=test-results-unit.xml
+    
+    - name: Upload unit test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: unit-test-results-${{ matrix.python-version }}
+        path: test-results-unit.xml
+    
+    - name: Upload coverage to Codecov
+      if: matrix.python-version == '3.9'
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Create test environment file
+      run: |
+        echo "OPENAI_API_KEY=test-key-for-mocked-tests" > .env
+        echo "LANGSMITH_API_KEY=test-langsmith-key" >> .env
+    
+    - name: Run integration tests
+      run: |
+        pytest tests/test_integration/ -v \
+          --junit-xml=test-results-integration.xml \
+          --timeout=300
+    
+    - name: Upload integration test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: integration-test-results
+        path: test-results-integration.xml
+
+  quality-tests:
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Create test environment file
+      run: |
+        echo "OPENAI_API_KEY=test-key-for-mocked-tests" > .env
+        echo "LANGSMITH_API_KEY=test-langsmith-key" >> .env
+    
+    - name: Run quality tests
+      run: |
+        pytest tests/test_quality/ -v \
+          --junit-xml=test-results-quality.xml \
+          --timeout=600
+    
+    - name: Generate quality report
+      if: always()
+      run: |
+        python scripts/generate_quality_report.py \
+          --test-results test-results-quality.xml \
+          --output quality-report.json
+    
+    - name: Upload quality test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: quality-test-results
+        path: |
+          test-results-quality.xml
+          quality-report.json
+
+  performance-benchmarks:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'push'
+    needs: [unit-tests, integration-tests]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Create test environment file
+      run: |
+        echo "OPENAI_API_KEY=test-key-for-mocked-tests" > .env
+        echo "LANGSMITH_API_KEY=test-langsmith-key" >> .env
+    
+    - name: Run performance benchmarks
+      run: |
+        python scripts/run_performance_benchmarks.py \
+          --output benchmark-results.json \
+          --timeout 900
+    
+    - name: Check performance regressions
+      run: |
+        python scripts/check_performance_regression.py \
+          --current benchmark-results.json \
+          --baseline .github/performance-baselines.json \
+          --threshold 0.15
+    
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: performance-benchmarks
+        path: benchmark-results.json
+
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install safety bandit
+    
+    - name: Run safety check
+      run: |
+        safety check --json --output safety-report.json || true
+    
+    - name: Run bandit security scan
+      run: |
+        bandit -r src/ -f json -o bandit-report.json || true
+    
+    - name: Upload security scan results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-scan-results
+        path: |
+          safety-report.json
+          bandit-report.json
+
+  code-quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Run linting
+      run: |
+        flake8 src/ tests/ --max-line-length=120 --extend-ignore=E203,W503 \
+          --output-file=flake8-report.txt || true
+    
+    - name: Run type checking
+      run: |
+        mypy src/ --ignore-missing-imports \
+          --junit-xml=mypy-report.xml || true
+    
+    - name: Run code formatting check
+      run: |
+        black --check src/ tests/ --diff > black-report.txt || true
+    
+    - name: Upload code quality results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: code-quality-results
+        path: |
+          flake8-report.txt
+          mypy-report.xml
+          black-report.txt
+
+  test-summary:
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, quality-tests, security-scan, code-quality]
+    if: always()
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download all test artifacts
+      uses: actions/download-artifact@v3
+    
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install junitparser
+    
+    - name: Generate test summary
+      run: |
+        python scripts/generate_test_summary.py \
+          --unit-results unit-test-results-*/test-results-unit.xml \
+          --integration-results integration-test-results/test-results-integration.xml \
+          --quality-results quality-test-results/test-results-quality.xml \
+          --output test-summary.json
+    
+    - name: Create test summary comment
+      if: github.event_name == 'pull_request'
+      run: |
+        python scripts/create_pr_comment.py \
+          --summary test-summary.json \
+          --pr-number ${{ github.event.pull_request.number }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Upload test summary
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-summary
+        path: test-summary.json
+
+  quality-gate:
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, quality-tests]
+    if: always()
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Download test results
+      uses: actions/download-artifact@v3
+    
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install junitparser
+    
+    - name: Evaluate quality gate
+      run: |
+        python scripts/quality_gate.py \
+          --unit-results unit-test-results-*/test-results-unit.xml \
+          --integration-results integration-test-results/test-results-integration.xml \
+          --quality-results quality-test-results/test-results-quality.xml \
+          --quality-report quality-test-results/quality-report.json \
+          --config .github/quality-gate-config.yml
+    
+    - name: Quality gate status
+      run: |
+        echo "Quality gate evaluation completed"
+        echo "Check previous step for pass/fail status"

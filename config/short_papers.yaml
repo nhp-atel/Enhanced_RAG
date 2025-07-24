@@ -1,0 +1,10 @@
+# Configuration for short papers (<10 pages)  
+document_processing:
+  chunk_size: 600
+  chunk_overlap: 100
+  max_pages_for_metadata: 3
+  max_pages_for_summary: 5
+  split_strategy: "fixed_size"
+
+retrieval:
+  default_k: 4          # Fewer docs needed for short papers
