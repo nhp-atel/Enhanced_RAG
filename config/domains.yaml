@@ -1,0 +1,151 @@
+# Domain-Specific Configuration for RAG System
+domains:
+  ai_ml:
+    name: "Artificial Intelligence & Machine Learning"
+    keywords: ["neural network", "deep learning", "machine learning", "artificial intelligence", "CNN", "RNN", "transformer", "gradient descent"]
+    embedding_categories:
+      - "algorithms"
+      - "datasets" 
+      - "evaluation_metrics"
+      - "architectures"
+      - "applications"
+      - "technical_concepts"
+    few_shot_examples:
+      - question: "What is a transformer architecture?"
+        context: "The Transformer is a deep learning architecture based on attention mechanisms..."
+        answer: "A transformer is a neural network architecture that relies entirely on attention mechanisms..."
+
+  nlp:
+    name: "Natural Language Processing"
+    keywords: ["language model", "NLP", "tokenization", "embedding", "BERT", "GPT", "sentiment analysis", "named entity recognition"]
+    embedding_categories:
+      - "language_models"
+      - "tasks"
+      - "evaluation"
+      - "datasets"
+      - "techniques"
+      - "applications"
+    few_shot_examples:
+      - question: "What is BERT?"
+        context: "BERT (Bidirectional Encoder Representations from Transformers) is a pre-trained language model..."
+        answer: "BERT is a bidirectional transformer-based language model..."
+
+  computer_vision:
+    name: "Computer Vision"
+    keywords: ["image processing", "computer vision", "CNN", "object detection", "image classification", "segmentation", "feature extraction"]
+    embedding_categories:
+      - "models"
+      - "datasets"
+      - "metrics"
+      - "applications"
+      - "techniques"
+      - "benchmarks"
+    few_shot_examples:
+      - question: "What is object detection?"
+        context: "Object detection is a computer vision task that identifies and locates objects in images..."  
+        answer: "Object detection is the task of identifying and localizing objects within images..."
+
+  healthcare:
+    name: "Healthcare & Medical Research"
+    keywords: ["medical", "clinical", "patient", "diagnosis", "treatment", "healthcare", "biomarker", "clinical trial"]
+    embedding_categories:
+      - "conditions"
+      - "treatments"
+      - "outcomes"
+      - "methodologies"
+      - "populations"
+      - "biomarkers"
+    few_shot_examples:
+      - question: "What is a clinical trial?"
+        context: "A clinical trial is a research study conducted with human participants..."
+        answer: "A clinical trial is a systematic investigation designed to evaluate medical interventions..."
+
+  finance:
+    name: "Finance & Economics"
+    keywords: ["financial", "market", "trading", "risk", "portfolio", "economics", "investment", "banking"]
+    embedding_categories:
+      - "models"
+      - "markets"
+      - "instruments"
+      - "risk_factors"
+      - "strategies"
+      - "regulations"
+    few_shot_examples:
+      - question: "What is portfolio optimization?"
+        context: "Portfolio optimization is the process of selecting the best portfolio..."
+        answer: "Portfolio optimization involves selecting asset allocations that maximize expected return..."
+
+  physics:
+    name: "Physics & Physical Sciences"
+    keywords: ["quantum", "particle", "physics", "mechanics", "thermodynamics", "electromagnetism", "relativity"]
+    embedding_categories:
+      - "theories"
+      - "experiments"
+      - "measurements"
+      - "phenomena"
+      - "models"
+      - "applications"
+    few_shot_examples:
+      - question: "What is quantum entanglement?"
+        context: "Quantum entanglement is a quantum mechanical phenomenon..."
+        answer: "Quantum entanglement is a physical phenomenon where particles become interconnected..."
+
+  astronomy:
+    name: "Astronomy & Space Science"
+    keywords: ["astronomy", "astrophysics", "telescope", "galaxy", "star", "planet", "cosmology", "space"]
+    embedding_categories:
+      - "objects"
+      - "observations"
+      - "instruments"
+      - "phenomena"
+      - "theories"
+      - "missions"
+    few_shot_examples:
+      - question: "What is a black hole?"
+        context: "A black hole is a region of spacetime where gravity is so strong..."
+        answer: "A black hole is a region in space where gravitational pull is so strong..."
+
+  biology:
+    name: "Biology & Life Sciences"
+    keywords: ["biology", "genetics", "protein", "DNA", "cell", "organism", "evolution", "biochemistry"]
+    embedding_categories:
+      - "organisms"
+      - "processes"
+      - "structures"
+      - "mechanisms"
+      - "interactions"
+      - "methods"
+    few_shot_examples:
+      - question: "What is protein folding?"
+        context: "Protein folding is the physical process by which proteins acquire their structure..."
+        answer: "Protein folding is the process by which amino acid chains assume their functional 3D structure..."
+
+  chemistry:
+    name: "Chemistry & Chemical Sciences"
+    keywords: ["chemistry", "molecule", "reaction", "compound", "catalyst", "synthesis", "spectroscopy"]
+    embedding_categories:
+      - "compounds"
+      - "reactions"
+      - "methods"
+      - "properties"
+      - "techniques"
+      - "applications"
+    few_shot_examples:
+      - question: "What is catalysis?"
+        context: "Catalysis is the process of increasing the rate of a chemical reaction..."
+        answer: "Catalysis is the acceleration of chemical reactions through the addition of catalysts..."
+
+  general_research:
+    name: "General Academic Research"
+    keywords: ["research", "study", "analysis", "methodology", "results", "conclusion", "hypothesis"]
+    embedding_categories:
+      - "concepts"
+      - "methodology"
+      - "findings"
+      - "related_work"
+      - "applications"
+      - "limitations"
+    few_shot_examples:
+      - question: "What is the research methodology?"
+        context: "The research methodology describes the systematic approach used in the study..."
+        answer: "The research methodology refers to the systematic framework and approach used to conduct the study..."

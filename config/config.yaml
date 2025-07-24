@@ -1,0 +1,132 @@
+# RAG System Configuration
+system:
+  name: "Enhanced RAG System"
+  version: "1.0.0"
+  environment: "development"
+
+# LLM Configuration
+llm:
+  provider: "openai"
+  model: "gpt-4o-mini"
+  temperature: 0.1
+  max_tokens: 2048
+  timeout: 30
+  rate_limit:
+    requests_per_minute: 60
+    tokens_per_minute: 150000
+
+# Embedding Configuration  
+embeddings:
+  provider: "openai"
+  model: "text-embedding-3-small"
+  dimensions: 1536
+  batch_size: 100
+  timeout: 30
+
+# Document Processing
+document_processing:
+  chunk_size: 800
+  chunk_overlap: 150
+  separators: ["\n\n", "\n", ". ", " ", ""]
+  max_pages_for_metadata: 3
+  max_pages_for_summary: 5
+  metadata_char_limit: 8000
+  summary_char_limit: 12000
+
+# Vector Store Configuration
+vector_store:
+  provider: "faiss"
+  index_type: "IndexFlatIP"  # Inner Product for cosine similarity
+  similarity_metric: "cosine"
+  persistence:
+    enabled: true
+    directory: "./data/indices"
+    save_every_n_docs: 100
+
+# Retrieval Configuration
+retrieval:
+  default_k: 6
+  max_k: 20
+  similarity_threshold: 0.7
+  rerank_enabled: true
+  strategies:
+    metadata_keywords: ["author", "title", "year", "published", "wrote", "when", "date", "institution"]
+    concept_keywords: ["what is", "define", "explain", "concept", "term", "meaning"]
+    method_keywords: ["how", "method", "approach", "technique", "algorithm"]
+    finding_keywords: ["result", "finding", "conclusion", "discovered", "showed"]
+    summary_keywords: ["summary", "overview", "about", "main", "key points"]
+
+# Caching Configuration
+caching:
+  enabled: true
+  backend: "file"  # file, redis, memory
+  directory: "./data/cache"
+  ttl_seconds: 3600  # 1 hour
+  max_size_mb: 1024  # 1GB
+  eviction_policy: "lru"
+
+# Error Handling & Retry
+error_handling:
+  max_retries: 3
+  backoff_factor: 2.0
+  retry_on_status: [429, 500, 502, 503, 504]
+  circuit_breaker:
+    failure_threshold: 5
+    recovery_timeout: 30
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "structured"  # structured, simple
+  output: "console"  # console, file, both
+  file_path: "./logs/rag_system.log"
+  max_file_size_mb: 100
+  backup_count: 5
+  include_request_ids: true
+
+# Monitoring & Metrics
+monitoring:
+  enabled: true
+  metrics_port: 8080
+  health_check_enabled: true
+  performance_tracking:
+    track_latency: true
+    track_token_usage: true
+    track_error_rates: true
+    export_to_prometheus: false
+
+# Cost Controls
+cost_control:
+  daily_budget_usd: 50.0
+  per_request_budget_usd: 1.0
+  token_budget_per_day: 1000000
+  alert_threshold_percent: 80
+  auto_shutdown_on_budget_exceeded: false
+
+# Domain-Specific Configuration
+domains:
+  definitions_file: "./config/domains.yaml"
+  auto_detection: true
+  default_domain: "general_research"
+  concept_extraction:
+    max_concepts_per_type: 5
+    confidence_threshold: 0.8
+
+# API Configuration (for REST service)
+api:
+  host: "0.0.0.0"
+  port: 8000
+  cors_enabled: true
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 100
+  authentication:
+    enabled: false  # Set to true for production
+    type: "api_key"  # api_key, oauth2, jwt
+
+# Testing Configuration
+testing:
+  ground_truth_file: "./tests/data/ground_truth.json"
+  evaluation_metrics: ["recall@k", "precision@k", "mrr", "faithfulness"]
+  benchmark_papers: ["./tests/data/sample_papers/"]
+  automated_evaluation: true

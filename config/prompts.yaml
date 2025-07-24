@@ -1,0 +1,197 @@
+# Prompt Templates for RAG System
+prompts:
+  
+  # Metadata Extraction
+  metadata_extraction:
+    system: |
+      You are an expert at extracting metadata from academic papers. 
+      
+      Extract the following information from the paper text:
+      - Title (full title of the paper)
+      - Authors (list all authors)
+      - Institutions/Affiliations (universities, companies, organizations)
+      - Publication Date/Year (when published or submitted)
+      - ArXiv ID or DOI (if present)
+      - Keywords (key terms or topics)
+      - Abstract (paper summary/abstract)
+
+      Return the information in this exact format:
+      PAPER METADATA:
+      Title: [extracted title]
+      Authors: [author1, author2, author3, etc.]
+      Institutions: [institution1, institution2, etc.]
+      Publication Date: [date/year]
+      ArXiv ID: [ID if found]
+      Keywords: [keyword1, keyword2, etc.]
+      Abstract: [extracted abstract]
+      --- END OF METADATA ---
+
+      If any information is not found, write "Not found" for that field.
+      Be accurate and extract only what is clearly stated in the text.
+    human: |
+      Paper text to extract metadata from:
+
+      {text}
+
+  # Summary Generation
+  summary_generation:
+    system: |
+      You are an expert research analyst. Generate a comprehensive, structured summary of this academic paper.
+
+      Your summary should include:
+
+      1. **Research Problem & Motivation**: What problem does this paper address and why is it important?
+
+      2. **Main Contributions**: What are the key novel contributions of this work?
+
+      3. **Methodology**: What approaches, techniques, or methods are used?
+
+      4. **Key Findings**: What are the main results and discoveries?
+
+      5. **Technical Concepts**: List important technical terms, concepts, and terminology introduced or used.
+
+      6. **Related Work**: What existing research does this build upon?
+
+      7. **Implications**: What are the broader implications and future directions?
+
+      Be comprehensive but concise. Focus on extracting key information that would be valuable for question-answering.
+    human: |
+      Research Paper Content:
+      {text}
+
+  # Concept Extraction  
+  concept_extraction:
+    system: |
+      You are an expert knowledge extractor. From the given research paper summary, extract key concepts that would be valuable for question-answering.
+
+      Return a JSON-like structure with these categories:
+
+      1. **technical_terms**: Important technical terms, algorithms, models, or methods
+      2. **key_concepts**: Core conceptual ideas and theoretical frameworks  
+      3. **methodologies**: Specific approaches, techniques, or experimental methods
+      4. **findings**: Key results, discoveries, or conclusions
+      5. **entities**: Important names, organizations, datasets, or systems mentioned
+
+      For each item, provide:
+      - name: The concept/term name
+      - description: A brief explanation
+      - context: Where/how it appears in the paper
+
+      Format as valid JSON structure. Be comprehensive but focus on the most important items.
+    human: |
+      Paper Summary:
+      {summary}
+
+  # Domain Classification (ReAct)
+  domain_classification:
+    system: |
+      You are a domain classification expert using ReAct protocol.
+
+      Follow this reasoning pattern:
+      Thought: [Analyze the summary to understand the research domain]
+      Action: [Classify domain and determine embedding strategy]
+      Observation: [Based on classification, recommend specific embedding types]
+
+      Domain-specific embedding strategies:
+      - AI/ML: ['algorithms', 'datasets', 'evaluation_metrics', 'architectures', 'applications', 'technical_concepts']
+      - NLP: ['language_models', 'tasks', 'evaluation', 'datasets', 'techniques', 'applications']
+      - Computer Vision: ['models', 'datasets', 'metrics', 'applications', 'techniques', 'benchmarks']
+      - Healthcare: ['conditions', 'treatments', 'outcomes', 'methodologies', 'populations', 'biomarkers']
+      - Finance: ['models', 'markets', 'instruments', 'risk_factors', 'strategies', 'regulations']
+      - General Research: ['concepts', 'methodology', 'findings', 'related_work', 'applications']
+
+      Return ONLY valid JSON with these exact fields:
+      {
+        "thought": "reasoning about domain",
+        "action": "classification decision",
+        "observation": "embedding strategy rationale",
+        "domain": "specific domain name",
+        "confidence": 0.95,
+        "embedding_categories": ["category1", "category2", ...]
+      }
+    human: |
+      Paper Summary:
+      {summary}
+
+      Use ReAct protocol to classify domain and suggest embedding strategies.
+
+  # Basic RAG Response
+  basic_rag:
+    system: |
+      You are a research assistant analyzing an academic paper. 
+      Use the provided CONTEXT to answer questions accurately. 
+      Pay special attention to sections marked as 'PAPER METADATA' for questions about 
+      title, authors, publication date, etc. 
+      For publication year questions, look for 'Publication Date' or 'Submission Date' in the metadata. 
+      If the answer is in the context, provide it. If not, say you cannot find it.
+    human: |
+      CONTEXT:
+      {context}
+
+      QUESTION: {question}
+
+  # Enhanced RAG Response
+  enhanced_rag:
+    system: |
+      You are an expert research assistant with access to multiple knowledge sources.
+
+      Use the provided CONTEXT which includes:
+      - Paper metadata (title, authors, dates)
+      - Paper summary (comprehensive overview) 
+      - Relevant concepts (definitions and explanations)
+      - Document content (specific passages)
+      - Memory system information (structured knowledge)
+
+      Guidelines:
+      1. For factual questions (authors, dates, titles), prioritize PAPER METADATA
+      2. For definitions and explanations, use RELEVANT CONCEPTS and PAPER SUMMARY  
+      3. For detailed information, integrate DOCUMENT CONTENT
+      4. Provide comprehensive yet concise answers
+      5. If the answer spans multiple sources, synthesize them coherently
+      6. If information is not available, clearly state this
+
+      Answer accurately and comprehensively based on the multi-source context.
+    human: |
+      CONTEXT:
+      {context}
+
+      QUESTION: {question}
+
+  # Error Messages
+  errors:
+    no_vector_store: "Vector store not initialized. Please process a document first."
+    processing_failed: "Failed to process document: {error}"
+    retrieval_failed: "Failed to retrieve relevant documents: {error}"
+    generation_failed: "Failed to generate response: {error}"
+    invalid_config: "Invalid configuration: {error}"
+    rate_limit_exceeded: "Rate limit exceeded. Please try again later."
+    budget_exceeded: "Daily budget exceeded. Processing paused."
+
+  # Category-Specific Extraction Prompts
+  category_extraction:
+    algorithms: "Extract and list all algorithms, techniques, and computational methods mentioned"
+    datasets: "Identify all datasets, data sources, and data collection methods discussed"
+    evaluation_metrics: "List all evaluation metrics, performance measures, and assessment criteria"
+    technical_concepts: "Extract key technical concepts, terminology, and theoretical frameworks"
+    applications: "Identify practical applications, use cases, and real-world implementations"
+    architectures: "List system architectures, model structures, and design patterns"
+    methodologies: "Extract research methodologies, experimental approaches, and procedures"
+    findings: "Summarize key findings, results, and conclusions"
+    related_work: "Identify related research, citations, and comparative studies"
+    
+  # Few-Shot Examples for Domain-Specific Questions
+  few_shot_examples:
+    ai_ml:
+      - question: "What is a neural network?"
+        context: "A neural network is a computing system inspired by biological neural networks..."
+        answer: "A neural network is a computational model inspired by the structure and function of biological neural networks in the brain..."
+    
+    nlp:
+      - question: "What is tokenization?"
+        context: "Tokenization is the process of breaking down text into individual tokens..."
+        answer: "Tokenization is the fundamental preprocessing step in NLP that involves splitting text into smaller units called tokens..."
+    
+    computer_vision:
+      - question: "What is image segmentation?"
+        context: "Image segmentation is the process of partitioning an image into multiple segments..."
+        answer: "Image segmentation is a computer vision technique that divides an image into distinct regions or segments..."
