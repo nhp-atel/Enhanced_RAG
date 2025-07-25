@@ -6,7 +6,7 @@ import pytest
 import tempfile
 import shutil
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 from unittest.mock import Mock, MagicMock
 import json
 import numpy as np
@@ -21,6 +21,14 @@ class MockLLMClient(LLMClient):
     """Mock LLM client for testing"""
     
     def __init__(self, responses: Optional[Dict[str, str]] = None):
+        # Initialize parent with mock config
+        super().__init__({
+            'provider': 'openai',  # Use valid provider for testing
+            'model': 'mock-model',
+            'temperature': 0.1,
+            'max_tokens': 2048,
+            'timeout': 30
+        })
         self.responses = responses or {}
         self.call_count = 0
         self.last_messages = []
@@ -59,17 +67,40 @@ Abstract: This is a test paper about advanced AI techniques.
     
     def generate_with_retry(self, messages: List[Dict[str, str]], **kwargs) -> Any:
         return self.generate(messages, **kwargs)
+    
+    def estimate_cost(self, text: str) -> float:
+        """Mock cost estimation"""
+        return len(text) * 0.00001  # $0.00001 per character
+    
+    def count_tokens(self, text: str) -> int:
+        """Mock token counting"""
+        return len(text.split()) * 1.3  # Rough approximation
+    
+    @property
+    def max_context_length(self) -> int:
+        """Mock context length"""
+        return 8192
 
 
 class MockEmbeddingClient(EmbeddingClient):
     """Mock embedding client for testing"""
     
     def __init__(self, dimension: int = 768):
+        # Initialize parent with mock config
+        super().__init__({
+            'provider': 'openai',  # Use valid provider for testing
+            'model': 'mock-embeddings',
+            'dimensions': dimension,
+            'batch_size': 100,
+            'timeout': 30
+        })
         self.dimension = dimension
         self.call_count = 0
         self.last_texts = []
         
-    def embed_documents(self, texts: List[str], **kwargs) -> List[List[float]]:
+    def embed_documents(self, texts: List[str], **kwargs) -> Any:
+        from src.interfaces import EmbeddingResponse
+        
         self.call_count += 1
         self.last_texts = texts
         
@@ -81,11 +112,31 @@ class MockEmbeddingClient(EmbeddingClient):
             np.random.seed(text_hash)
             embedding = np.random.normal(0, 1, self.dimension).tolist()
             embeddings.append(embedding)
-            
-        return embeddings
+        
+        return EmbeddingResponse(
+            embeddings=embeddings,
+            model="mock-embeddings",
+            tokens_used=sum(len(t.split()) for t in texts),
+            cost_usd=len(texts) * 0.0001,
+            latency_ms=100
+        )
     
     def embed_query(self, text: str, **kwargs) -> List[float]:
-        return self.embed_documents([text])[0]
+        response = self.embed_documents([text])
+        return response.embeddings[0]
+    
+    def embed_with_retry(self, texts: Union[str, List[str]], **kwargs) -> Any:
+        if isinstance(texts, str):
+            texts = [texts]
+        return self.embed_documents(texts, **kwargs)
+    
+    def estimate_cost(self, texts: Union[str, List[str]]) -> float:
+        if isinstance(texts, str):
+            texts = [texts]
+        return len(texts) * 0.0001
+    
+    def count_tokens(self, text: str) -> int:
+        return len(text.split())
 
 
 class MockVectorStore(VectorStore):
@@ -96,23 +147,36 @@ class MockVectorStore(VectorStore):
         self.embeddings = []
         self.doc_count = 0
         
-    def add_documents(self, documents: List[Document], embeddings: List[List[float]]) -> None:
+    def add_documents(self, documents: List[Document], **kwargs) -> List[str]:
         self.documents.extend(documents)
-        self.embeddings.extend(embeddings)
         self.doc_count += len(documents)
+        # Return mock document IDs
+        return [f"doc_{i}" for i in range(len(documents))]
         
-    def similarity_search(self, query_embedding: List[float], k: int = 6) -> List[Document]:
+    def similarity_search(self, query: str, k: int = 6, **kwargs) -> List[Document]:
         # Return first k documents for simplicity
         return self.documents[:min(k, len(self.documents))]
     
-    def save_index(self, path: str) -> bool:
+    def similarity_search_with_score(self, query: str, k: int = 6, **kwargs) -> List[tuple]:
+        docs = self.similarity_search(query, k)
+        # Return docs with mock scores
+        return [(doc, 0.8 - i * 0.1) for i, doc in enumerate(docs)]
+    
+    def delete_documents(self, document_ids: List[str]) -> bool:
+        return True
+    
+    def save_local(self, path: str) -> bool:
         return True
         
-    def load_index(self, path: str) -> bool:
+    def load_local(self, path: str) -> bool:
         return True
         
-    def get_document_count(self) -> int:
-        return self.doc_count
+    def get_stats(self) -> Dict[str, Any]:
+        return {
+            "document_count": self.doc_count,
+            "index_size": len(self.documents),
+            "status": "healthy"
+        }
 
 
 class MockLogger(LoggerInterface):
@@ -120,6 +184,7 @@ class MockLogger(LoggerInterface):
     
     def __init__(self):
         self.logs = []
+        self.context = {}
         
     def info(self, message: str, **kwargs):
         self.logs.append({"level": "info", "message": message, "kwargs": kwargs})
@@ -132,6 +197,9 @@ class MockLogger(LoggerInterface):
         
     def debug(self, message: str, **kwargs):
         self.logs.append({"level": "debug", "message": message, "kwargs": kwargs})
+    
+    def set_context(self, **kwargs):
+        self.context.update(kwargs)
 
 
 class MockMetrics(MetricsInterface):
@@ -142,16 +210,23 @@ class MockMetrics(MetricsInterface):
         self.histograms = {}
         self.gauges = {}
         
-    def increment_counter(self, name: str, value: int = 1, **tags):
+    def increment_counter(self, name: str, value: int = 1, tags: Dict[str, str] = None):
         self.counters[name] = self.counters.get(name, 0) + value
         
-    def record_histogram(self, name: str, value: float, **tags):
+    def record_histogram(self, name: str, value: float, tags: Dict[str, str] = None):
         if name not in self.histograms:
             self.histograms[name] = []
         self.histograms[name].append(value)
         
-    def record_gauge(self, name: str, value: float, **tags):
+    def record_gauge(self, name: str, value: float, tags: Dict[str, str] = None):
         self.gauges[name] = value
+    
+    def get_metrics(self) -> Dict[str, Any]:
+        return {
+            "counters": self.counters,
+            "histograms": self.histograms,
+            "gauges": self.gauges
+        }
 
 
 @pytest.fixture
