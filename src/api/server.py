@@ -2,6 +2,7 @@
 FastAPI server for RAG system deployment.
 """
 
+import sys
 import time
 from typing import List, Optional, Dict, Any
 from pathlib import Path

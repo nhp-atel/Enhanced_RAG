@@ -4,6 +4,7 @@ Enhanced RAG System - Main CLI Interface
 """
 
 import sys
+import os
 import argparse
 import json
 from pathlib import Path
